@@ -91,7 +91,7 @@ for trame in wpa:
         else:
             mic_to_test = raw(trame)[129:145].hex()
             # http://etutorials.org/Networking/802.11+security.+wi-fi+protected+access+and+802.11i/Part+II+The+Design+of+Wi-Fi+Security/Chapter+10.+WPA+and+RSN+Key+Hierarchy/Details+of+Key+Derivation+for+WPA/
-            crypto = raw(trame)[0x36] & 0x02 # we want to get that bit to know if it's MD5 or SHA1.
+            crypto = raw(trame)[0x36] & 0x2 # we want to get that bit to know if it's MD5 or SHA1. We remove the algo AES or RC4, because it would not differ the mac generation.
 
 data        = a2b_hex("0103005f02030a0000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") #cf "Quelques détails importants" dans la donnée
 ssid = str.encode(ssid)
@@ -99,12 +99,15 @@ B = min(APmac,Clientmac)+max(APmac,Clientmac)+min(ANonce,SNonce)+max(ANonce,SNon
 
 file1 = open('passphrases.txt', 'r')
 Lines = file1.readlines()
+# we iterate each line for each passphrase
+foundPassphrase = False
 for line in Lines:
     #calculate 4096 rounds to obtain the 256 bit (32 oct) PMK
     passPhrase = str.encode(line.strip())
-    if (crypto == 2) :
+    # 
+    if crypto == 2 : # SHA1 to create the MAC (found in 4th message of 4-way handshake)
         pmk = pbkdf2(hashlib.sha1,passPhrase, ssid, 4096, 32)
-    elif crypto == 1:
+    elif crypto == 1: # or it's MD5.
         pmk = pbkdf2(hashlib.md5,passPhrase, ssid, 4096, 32)
     else :
         print("unknown error")
@@ -114,7 +117,10 @@ for line in Lines:
 
     #calculate MIC over EAPOL payload (Michael)- The ptk is, in fact, KCK|KEK|TK|MICK
     mic = hmac.new(ptk[0:16],data,hashlib.sha1)
+
+    # the mac are the same, so the passphrase is correct
     if mic_to_test == mic.hexdigest()[:32] :
+        foundPassphrase = True
         print ("Passphrase found !")
         print ("\n\nValues used to derivate keys")
         print ("============================")
@@ -135,3 +141,6 @@ for line in Lines:
         print ("MICK:\t\t",ptk[48:64].hex(),"\n")
         print ("MIC:\t\t",mic.hexdigest(),"\n")
         break # we leave the loop befause we found the correct passphrase
+
+if foundPassphrase == False :
+    print("The passphrase is not in passphrases.txt")
