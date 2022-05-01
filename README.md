@@ -60,6 +60,8 @@ Dans cette première partie, vous allez récupérer le script **Python3** [wpa\_
 
 - __Modifier le script__ pour qu’il récupère automatiquement, à partir de la capture, les valeurs qui se trouvent actuellement codées en dur (```ssid```, ```APmac```, ```Clientmac```, nonces…) 
 
+![key_derivation](images/key_derivation.png)
+
 
 ### 2. Scaircrack (aircrack basé sur Scapy)
 
@@ -75,6 +77,8 @@ Utilisant le script [wpa\_key\_derivation.py](files/wpa_key_derivation.py) comme
 - Comparer les deux MIC
    - Identiques &rarr; La passphrase utilisée est correcte
    - Différents &rarr; Essayer avec une nouvelle passphrase
+
+![scaircrack_work](images/scaircrack_work.png)
 
 ### 3. Attaque PMKID
 
@@ -102,6 +106,8 @@ Utilisant votre script précédent, le modifier pour réaliser les taches suivan
 - Comparer la PMKID calculée avec celle récupérée de la capture :
    - Identiques &rarr; La passphrase utilisée est correcte
    - Différents &rarr; Essayer avec une nouvelle passphrase
+
+![pmkid_work](images/pmkid_work.png)
 
 
 #### 3.3. Attaque hashcat
