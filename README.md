@@ -114,6 +114,31 @@ Utilisant votre script précédent, le modifier pour réaliser les taches suivan
 
 A manière de comparaison, réaliser l'attaque sur le [fichier de capture](files/PMKID_handshake.pcap) utilisant la méthode décrite [ici](https://hashcat.net/forum/thread-7717.html).
 
+Descriptif de la méthode utilisée :
+
+- Installation de `hcxtools` avec la commande suivante :
+
+  ```bash
+  sudo apt install hcxtools
+  ```
+
+- Conversion du fichier pcap dans un format que hashcat peut utiliser :
+
+  ```bash
+  hcxpcapngtool -o hash.22000 PMKID_handshake.pcap
+  ```
+
+- Exécution de hashcat :
+
+  ```bash
+  hashcat -m 22000 hash.22000 --force -a 3 ?l?l?l?l?l?d?d?d
+  ```
+
+- Cela prenait beaucoup de temps avec le masque complet, nous avons donc simplifié le masque puisque nous connaissons la passphrase :
+
+  ![photo_2022-05-02_19-59-29](images/photo_2022-05-02_19-59-29.jpg)
+
+
 
 ### 4. Scairodump (Challenge optionnel pour un bonus)
 
